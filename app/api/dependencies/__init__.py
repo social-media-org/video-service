@@ -6,33 +6,13 @@ from fastapi import Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.core.database import get_database
-from app.repositories.example_repository import ExampleRepository
-from app.services.example_service import ExampleService
+from app.services.video_service import VideoService
 
 
-def get_example_repository(
-    database: Annotated[AsyncIOMotorDatabase, Depends(get_database)]
-) -> ExampleRepository:
-    """Get Example repository instance with database dependency.
-
-    Args:
-        database: MongoDB database instance
+def get_video_service() -> VideoService:
+    """Get Video service instance.
 
     Returns:
-        ExampleRepository: Repository instance
+        VideoService: Service instance
     """
-    return ExampleRepository(database)
-
-
-def get_example_service(
-    repository: Annotated[ExampleRepository, Depends(get_example_repository)]
-) -> ExampleService:
-    """Get Example service instance with repository dependency.
-
-    Args:
-        repository: Example repository instance
-
-    Returns:
-        ExampleService: Service instance
-    """
-    return ExampleService(repository)
+    return VideoService()

@@ -15,3 +15,7 @@ json-logging==1.5.1
 
 # Type checking
 mypy==1.13.0
+
+# Video processing
+moviepy==1.0.3
+Pillow>=10.0.0

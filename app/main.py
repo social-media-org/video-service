@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from app.api.v1.routes import example
+from app.routes import video_route
 from app.core.config import settings
 from app.core import database
 from app.core.exceptions import setup_exception_handlers
@@ -73,7 +73,7 @@ def create_app() -> FastAPI:
         }
 
     # Include routers
-    app.include_router(example.router, prefix=settings.api_v1_prefix)
+    app.include_router(video_route.router, prefix=settings.api_v1_prefix)
 
     return app
 
