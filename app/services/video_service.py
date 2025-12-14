@@ -1,8 +1,7 @@
 """Service pour la génération de vidéos."""
 
 import os
-import random
-from moviepy.editor import VideoFileClip, AudioFileClip
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip
 
 from app.models.video_model import VideoGenerationRequest, VideoGenerationResponse
 
@@ -18,41 +17,73 @@ class VideoService:
         # S'assurer que le répertoire de templates existe
         os.makedirs(self.template_dir, exist_ok=True)
 
-    def _select_random_template(self) -> str:
-        """Sélectionner un template vidéo aléatoire.
+    def _validate_template_path(self, template_path: str) -> str:
+        """Valider le chemin du template vidéo.
         
+        Args:
+            template_path: Chemin du template spécifié
+            
         Returns:
-            Chemin absolu du template sélectionné
+            Chemin absolu du template validé
             
         Raises:
-            ValueError: Si aucun template n'est trouvé
+            ValueError: Si le template n'existe pas
         """
-        try:
-            files = os.listdir(self.template_dir)
-            # Filtrer pour ne garder que les fichiers vidéo
-            video_files = [f for f in files if f.lower().endswith(('.mp4', '.mov', '.avi', '.mkv'))]
+        if not template_path:
+            raise ValueError("Video template path is required")
+        
+        if not os.path.exists(template_path):
+            raise ValueError(f"Video template not found: {template_path}")
+        
+        print(f"✅ Utilisation du template vidéo: {os.path.basename(template_path)}")
+        return template_path
+
+    def _add_background_music(self, audio_clip: AudioFileClip, background_music_path: str) -> AudioFileClip:
+        """Ajouter une musique de fond à l'audio principal.
+        
+        Args:
+            audio_clip: Clip audio principal
+            background_music_path: Chemin de la musique de fond
             
-            if not video_files:
-                raise ValueError("No video templates found")
-            
-            template_paths = [os.path.join(self.template_dir, f) for f in video_files]
-            selected = random.choice(template_paths)
-            
-            print(f"✅ Selected template: {os.path.basename(selected)}")
-            return selected
-            
-        except FileNotFoundError:
-            raise ValueError(f"Template directory not found: {self.template_dir}")
+        Returns:
+            Clip audio mixé avec la musique de fond
+        """
+        print("🎵 Chargement de la musique de fond...")
+        background_music_clip = AudioFileClip(background_music_path)
+        
+        # Ajuster le volume de la musique de fond (30% du volume)
+        background_music_clip = background_music_clip.volumex(0.3)
+        
+        audio_duration_sec = audio_clip.duration
+        
+        # Boucler la musique de fond pour correspondre à la durée audio
+        if background_music_clip.duration < audio_duration_sec:
+            n_loops = int(audio_duration_sec / background_music_clip.duration) + 1
+            background_music_clip = background_music_clip.loop(n=n_loops)
+        
+        # Couper à la durée exacte de l'audio principal
+        background_music_clip = background_music_clip.subclip(0, audio_duration_sec)
+        
+        # Mixer l'audio principal avec la musique de fond
+        print("🔊 Mixage de l'audio principal avec la musique de fond...")
+        final_audio = CompositeAudioClip([audio_clip, background_music_clip])
+        print(f"✅ Musique de fond ajoutée (volume: 30%)")
+        
+        # Fermer le clip de musique de fond (il est maintenant intégré dans CompositeAudioClip)
+        background_music_clip.close()
+        
+        return final_audio
 
     async def render_video(self, request: VideoGenerationRequest) -> VideoGenerationResponse:
         """Génère une vidéo à partir d'un audio et d'un template.
         
         Cette méthode:
-        1. Sélectionne un template vidéo aléatoire
+        1. Valide le chemin du template vidéo
         2. Charge l'audio depuis le chemin absolu
-        3. Boucle la vidéo pour correspondre à la durée audio
-        4. Ajoute l'audio à la vidéo
-        5. Exporte la vidéo au chemin spécifié
+        3. Ajoute la musique de fond si spécifiée
+        4. Boucle la vidéo pour correspondre à la durée audio
+        5. Ajoute l'audio à la vidéo
+        6. Exporte la vidéo au chemin spécifié
         
         Args:
             request: Requête de génération vidéo contenant les chemins et paramètres
@@ -66,21 +97,30 @@ class VideoService:
         print(f"🎬 Début de la génération vidéo")
         print(f"📂 Audio: {request.audio_path}")
         print(f"📂 Vidéo sortie: {request.video_absolute_path}")
+        print(f"📂 Template vidéo: {request.video_template_path if request.video_template_path else 'Non spécifié'}")
+        print(f"🎵 Musique de fond: {request.background_music if request.background_music else 'Aucune'}")
         
         try:
             # Vérifier que l'audio existe
             if not os.path.exists(request.audio_path):
                 raise ValueError(f"Audio file not found: {request.audio_path}")
             
-            # Sélectionner un template vidéo
-            print("📹 Sélection d'un template vidéo aléatoire...")
-            template_path = self._select_random_template()
+            # Valider le chemin du template vidéo
+            template_path = self._validate_template_path(request.video_template_path)
             
-            # Charger l'audio et obtenir sa durée
-            print("🎵 Chargement de l'audio...")
+            # Charger l'audio principal et obtenir sa durée
+            print("🎵 Chargement de l'audio principal...")
             audio_clip = AudioFileClip(request.audio_path)
             audio_duration_sec = audio_clip.duration
-            print(f"✅ Audio chargé: {audio_duration_sec:.2f}s")
+            print(f"✅ Audio principal chargé: {audio_duration_sec:.2f}s")
+            
+            # Gérer la musique de fond si spécifiée
+            final_audio = audio_clip
+            if request.background_music:
+                if os.path.exists(request.background_music):
+                    final_audio = self._add_background_music(audio_clip, request.background_music)
+                else:
+                    print(f"⚠️ Musique de fond spécifiée mais non trouvée: {request.background_music}")
             
             # Charger le template vidéo
             print("📽️ Chargement du template vidéo...")
@@ -96,9 +136,9 @@ class VideoService:
             # Couper à la durée exacte de l'audio
             video_clip = video_clip.subclip(0, audio_duration_sec)
             
-            # Ajouter l'audio à la vidéo
+            # Ajouter l'audio final à la vidéo
             print("🎧 Ajout de l'audio à la vidéo...")
-            final_video = video_clip.set_audio(audio_clip)
+            final_video = video_clip.set_audio(final_audio)
             
             # S'assurer que le répertoire de sortie existe
             output_dir = os.path.dirname(request.video_absolute_path)

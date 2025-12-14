@@ -29,9 +29,9 @@ class VideoGenerationRequest(BaseModel):
         le=60,
         description="Images par seconde (optionnel, défaut: 30)"
     )
-    template: Optional[str] = Field(
-        "basic_fade",
-        description="Template de transition (optionnel, défaut: basic_fade)"
+    video_template_path: Optional[str] = Field(
+        None,
+        description="Chemin absolu du template vidéo (optionnel, défaut: None)"
     )
     background_music: Optional[str] = Field(
         None,
