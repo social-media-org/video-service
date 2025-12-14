@@ -12,7 +12,7 @@ router = APIRouter(prefix="/videos", tags=["Videos"])
 
 
 @router.post(
-    "/render",
+    "/generate",
     response_model=VideoGenerationResponse,
     status_code=status.HTTP_200_OK,
     summary="Générer une vidéo",
