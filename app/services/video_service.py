@@ -38,7 +38,7 @@ class VideoService:
         print(f"✅ Utilisation du template vidéo: {os.path.basename(template_path)}")
         return template_path
 
-    def _add_background_music(self, audio_clip: AudioFileClip, background_music_path: str) -> AudioFileClip:
+    def _add_background_music(self, audio_clip: AudioFileClip, background_music_path: str) -> CompositeAudioClip:
         """Ajouter une musique de fond à l'audio principal.
         
         Args:
@@ -52,7 +52,7 @@ class VideoService:
         background_music_clip = AudioFileClip(background_music_path)
         
         # Ajuster le volume de la musique de fond (30% du volume)
-        background_music_clip = background_music_clip.volumex(0.3)
+        background_music_clip = background_music_clip.volumex(0.1 )
         
         audio_duration_sec = audio_clip.duration
         
@@ -147,7 +147,12 @@ class VideoService:
             print(f"✅ Audio attaché: {final_video.audio is not None}")
             if final_video.audio:
                 print(f"   Durée audio: {final_video.audio.duration:.2f}s")
-                print(f"   Sample rate: {final_video.audio.fps} Hz")
+                # Try to get fps, but handle case where it might not exist
+                try:
+                    fps_value = final_video.audio.fps
+                    print(f"   Sample rate: {fps_value} Hz")
+                except AttributeError:
+                    print(f"   Sample rate: N/A (CompositeAudioClip)")
             
             # S'assurer que le répertoire de sortie existe
             output_dir = os.path.dirname(request.video_absolute_path)
