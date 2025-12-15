@@ -1,7 +1,7 @@
 """Service pour la génération de vidéos."""
 
 import os
-from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, concatenate_audioclips
 
 from app.models.video_model import VideoGenerationRequest, VideoGenerationResponse
 
@@ -59,7 +59,10 @@ class VideoService:
         # Boucler la musique de fond pour correspondre à la durée audio
         if background_music_clip.duration < audio_duration_sec:
             n_loops = int(audio_duration_sec / background_music_clip.duration) + 1
-            background_music_clip = background_music_clip.loop(n=n_loops)
+            # Créer une liste de clips répétés
+            clips = [background_music_clip] * n_loops
+            # Concaténer les clips pour créer une boucle
+            background_music_clip = concatenate_audioclips(clips)
         
         # Couper à la durée exacte de l'audio principal
         background_music_clip = background_music_clip.subclip(0, audio_duration_sec)
@@ -140,6 +143,12 @@ class VideoService:
             print("🎧 Ajout de l'audio à la vidéo...")
             final_video = video_clip.set_audio(final_audio)
             
+            # Debug: Check if audio is properly attached
+            print(f"✅ Audio attaché: {final_video.audio is not None}")
+            if final_video.audio:
+                print(f"   Durée audio: {final_video.audio.duration:.2f}s")
+                print(f"   Sample rate: {final_video.audio.fps} Hz")
+            
             # S'assurer que le répertoire de sortie existe
             output_dir = os.path.dirname(request.video_absolute_path)
             os.makedirs(output_dir, exist_ok=True)
@@ -148,6 +157,8 @@ class VideoService:
             print("⏳ Exportation de la vidéo (cela peut prendre plusieurs minutes)...")
             print(f"   Codec: libx264 | Audio: aac | FPS: {request.fps} | Preset: medium")
             
+            # Use verbose logging to see any errors
+            # Also try different audio codec if 'aac' fails
             final_video.write_videofile(
                 request.video_absolute_path,
                 codec='libx264',
@@ -155,7 +166,10 @@ class VideoService:
                 fps=request.fps,
                 preset='medium',
                 threads=4,
-                logger=None
+                verbose=True,
+                logger='bar',
+                temp_audiofile="temp_audio.m4a",  # Specify temp audio file
+                remove_temp=True  # Remove temp file after
             )
             
             # Fermer les clips pour libérer les ressources
