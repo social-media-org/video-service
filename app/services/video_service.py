@@ -171,8 +171,8 @@ class VideoService:
                 fps=request.fps,
                 preset='medium',
                 threads=4,
-                verbose=True,
-                logger='bar',
+                verbose=False,
+                logger=None,
                 temp_audiofile="temp_audio.m4a",  # Specify temp audio file
                 remove_temp=True  # Remove temp file after
             )
