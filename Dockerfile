@@ -1,5 +1,8 @@
 # Multi-stage Dockerfile for FastAPI application
 
+LABEL org.opencontainers.image.source="https://github.com/social-media/video-service"
+LABEL maintainer="social-media"
+ENV PYTHONUNBUFFERED=1
 # ============================================
 # Stage 1: Builder
 # ============================================
