@@ -162,20 +162,71 @@ class VideoService:
             print("⏳ Exportation de la vidéo (cela peut prendre plusieurs minutes)...")
             print(f"   Codec: libx264 | Audio: aac | FPS: {request.fps} | Preset: medium")
             
-            # Use verbose logging to see any errors
-            # Also try different audio codec if 'aac' fails
-            final_video.write_videofile(
-                request.video_absolute_path,
-                codec='libx264',
-                audio_codec='aac',
-                fps=request.fps,
-                preset='medium',
-                threads=4,
-                verbose=True,
-                logger='bar',  # Use progress bar logger
-                temp_audiofile="temp_audio.m4a",  # Specify temp audio file
-                remove_temp=True  # Remove temp file after
-            )
+            # Stratégie de fallback pour gérer les problèmes de logger sur différents OS
+            export_success = False
+            last_error = None
+            
+            # Tentative 1: Avec logger='bar' (recommandé)
+            if not export_success:
+                try:
+                    print("   Tentative avec logger='bar'...")
+                    final_video.write_videofile(
+                        request.video_absolute_path,
+                        codec='libx264',
+                        audio_codec='aac',
+                        fps=request.fps,
+                        preset='medium',
+                        threads=4,
+                        verbose=True,
+                        logger='bar',
+                        temp_audiofile="temp_audio.m4a",
+                        remove_temp=True
+                    )
+                    export_success = True
+                    print("   ✅ Export réussi avec logger='bar'")
+                except Exception as e:
+                    last_error = e
+                    print(f"   ⚠️  Échec avec logger='bar': {str(e)}")
+            
+            # Tentative 2: Sans spécifier logger (laisser les defaults)
+            if not export_success:
+                try:
+                    print("   Tentative sans logger explicite...")
+                    final_video.write_videofile(
+                        request.video_absolute_path,
+                        codec='libx264',
+                        audio_codec='aac',
+                        fps=request.fps,
+                        preset='medium',
+                        threads=4,
+                        temp_audiofile="temp_audio.m4a",
+                        remove_temp=True
+                    )
+                    export_success = True
+                    print("   ✅ Export réussi sans logger explicite")
+                except Exception as e:
+                    last_error = e
+                    print(f"   ⚠️  Échec sans logger: {str(e)}")
+            
+            # Tentative 3: Configuration minimale (dernier recours)
+            if not export_success:
+                try:
+                    print("   Tentative avec configuration minimale...")
+                    final_video.write_videofile(
+                        request.video_absolute_path,
+                        codec='libx264',
+                        audio_codec='aac',
+                        fps=request.fps
+                    )
+                    export_success = True
+                    print("   ✅ Export réussi avec configuration minimale")
+                except Exception as e:
+                    last_error = e
+                    print(f"   ⚠️  Échec avec configuration minimale: {str(e)}")
+            
+            # Si aucune tentative n'a réussi, lever l'erreur
+            if not export_success:
+                raise RuntimeError(f"Échec de l'export vidéo après plusieurs tentatives. Dernière erreur: {str(last_error)}")
             
             # Fermer les clips pour libérer les ressources
             final_video.close()
