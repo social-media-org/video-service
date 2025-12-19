@@ -44,7 +44,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/social-media/video-service:${{ github.event.inputs.tag || 'latest' }}
-            ghcr.io/social-media/video-service:${{ github.sha }}
+            ghcr.io/social-media-org/video-service:${{ github.event.inputs.tag || 'latest' }}
+            ghcr.io/social-media-org/video-service:${{ github.sha }}
 
 
