@@ -109,7 +109,7 @@ DEBUG=false
 ENVIRONMENT=development
 
 # API
-API_V1_PREFIX=/api/v1
+API_V1_PREFIX=
 ALLOWED_HOSTS=["*"]
 APP_PORT=8000
 
@@ -165,7 +165,7 @@ GET /health
 
 **Créer un exemple**
 ```http
-POST /api/v1/examples
+POST /examples
 Content-Type: application/json
 
 {
@@ -177,17 +177,17 @@ Content-Type: application/json
 
 **Lister les exemples**
 ```http
-GET /api/v1/examples?skip=0&limit=10
+GET /examples?skip=0&limit=10
 ```
 
 **Obtenir un exemple**
 ```http
-GET /api/v1/examples/{id}
+GET /examples/{id}
 ```
 
 **Mettre à jour un exemple**
 ```http
-PUT /api/v1/examples/{id}
+PUT /examples/{id}
 Content-Type: application/json
 
 {
@@ -197,7 +197,7 @@ Content-Type: application/json
 
 **Supprimer un exemple**
 ```http
-DELETE /api/v1/examples/{id}
+DELETE /examples/{id}
 ```
 
 ## 💻 Développement
@@ -341,7 +341,7 @@ git commit -m "Initial commit from template"
 - Ajouter vos models dans `app/models/`
 - Créer vos repositories dans `app/repositories/`
 - Implémenter vos services dans `app/services/`
-- Créer vos routes dans `app/api/v1/routes/`
+- Créer vos routes dans `app/routes/`
 
 4. **Configuration**
 ```bash

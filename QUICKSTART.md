@@ -114,7 +114,7 @@ L'application sera disponible sur `http://localhost:8000`
 
 **Créer un exemple:**
 ```bash
-curl -X POST http://localhost:8000/api/v1/examples \
+curl -X POST http://localhost:8000/examples \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Mon premier exemple",
@@ -125,7 +125,7 @@ curl -X POST http://localhost:8000/api/v1/examples \
 
 **Lister les exemples:**
 ```bash
-curl http://localhost:8000/api/v1/examples
+curl http://localhost:8000/examples
 ```
 
 **Health check:**
