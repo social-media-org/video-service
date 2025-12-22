@@ -1,6 +1,7 @@
 """Service pour la génération de vidéos."""
 
 import os
+import time
 from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, concatenate_audioclips
 
 from app.models.video_model import VideoGenerationRequest, VideoGenerationResponse
@@ -159,8 +160,11 @@ class VideoService:
             os.makedirs(output_dir, exist_ok=True)
             
             # Exporter la vidéo
-            print("⏳ Exportation de la vidéo (cela peut prendre plusieurs minutes)...")
-            print(f"   Codec: libx264 | Audio: aac | FPS: {request.fps} | Preset: medium")
+            print("⏳ Exportation de la vidéo (optimisée pour performance)...")
+            print(f"   Codec: libx264 | Audio: aac | FPS: {request.fps} | Preset: ultrafast | Bitrate: 2000k")
+            
+            # Mesurer le temps d'encodage
+            encoding_start = time.time()
             
             # Use verbose logging to see any errors
             # Also try different audio codec if 'aac' fails
@@ -169,13 +173,16 @@ class VideoService:
                 codec='libx264',
                 audio_codec='aac',
                 fps=request.fps,
-                preset='medium',
-                threads=4,
+                preset='ultrafast',
+                bitrate='2000k',
+                threads=8,
                 verbose=True,
                 logger='bar',
                 temp_audiofile="temp_audio.m4a",  # Specify temp audio file
                 remove_temp=True  # Remove temp file after
             )
+            
+            encoding_duration = time.time() - encoding_start
             
             # Fermer les clips pour libérer les ressources
             final_video.close()
@@ -184,6 +191,7 @@ class VideoService:
             
             print(f"✅ Vidéo générée avec succès: {request.video_absolute_path}")
             print(f"📊 Durée finale: {audio_duration_sec:.2f}s")
+            print(f"⏱️ Temps d'encodage: {encoding_duration:.2f}s ({encoding_duration/60:.1f}m)")
             
             # Créer l'URL de la vidéo (sera construite par le ui-service)
             # On retourne juste le chemin relatif
