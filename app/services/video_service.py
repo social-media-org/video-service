@@ -159,8 +159,8 @@ class VideoService:
             os.makedirs(output_dir, exist_ok=True)
             
             # Exporter la vidéo
-            print("⏳ Exportation de la vidéo (cela peut prendre plusieurs minutes)...")
-            print(f"   Codec: libx264 | Audio: aac | FPS: {request.fps} | Preset: medium")
+            print("⏳ Exportation de la vidéo (optimisée pour performance)...")
+            print(f"   Codec: libx264 | Audio: aac | FPS: {request.fps} | Preset: ultrafast | Bitrate: 2000k")
             
             # Use verbose logging to see any errors
             # Also try different audio codec if 'aac' fails
@@ -169,8 +169,9 @@ class VideoService:
                 codec='libx264',
                 audio_codec='aac',
                 fps=request.fps,
-                preset='medium',
-                threads=4,
+                preset='ultrafast',
+                bitrate='2000k',
+                threads=8,
                 verbose=True,
                 logger='bar',
                 temp_audiofile="temp_audio.m4a",  # Specify temp audio file
